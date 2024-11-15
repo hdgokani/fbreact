@@ -36,6 +36,7 @@ export const {
   retryLaneExpirationMs,
   syncLaneExpirationMs,
   transitionLaneExpirationMs,
+  enableOwnerStacks,
 } = dynamicFeatureFlags;
 
 // On WWW, __EXPERIMENTAL__ is used for a new modern build.
@@ -119,7 +120,6 @@ export const useModernStrictMode = true;
 
 export const disableLegacyMode = true;
 
-export const enableOwnerStacks = false;
 export const enableShallowPropDiffing = false;
 
 // Flow magic to verify the exports of this file match the original version.
