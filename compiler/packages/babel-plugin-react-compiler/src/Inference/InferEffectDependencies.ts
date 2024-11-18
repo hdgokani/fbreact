@@ -21,6 +21,14 @@ export function inferEffectDependencies(
   fn: HIRFunction,
 ): void {
   const fnExpressions = new Map<IdentifierId, FunctionExpression>();
+  const depArrayTargets = new Map<string, Map<string, number>>();
+  for (const effectTarget of env.config.inferEffectDependencies!) {
+    const moduleTargets =
+      depArrayTargets.get(effectTarget.module) ?? new Map<string, number>();
+    moduleTargets.set(effectTarget.imported, effectTarget.numRequiredArgs);
+    depArrayTargets.set(effectTarget.module, moduleTargets);
+  }
+  const targetLoads = new Map<IdentifierId, number>();
 
   for (const [, block] of fn.body.blocks) {
     let rewriteInstrs = new Map();
@@ -29,14 +37,24 @@ export function inferEffectDependencies(
       if (value.kind === 'FunctionExpression') {
         fnExpressions.set(lvalue.identifier.id, value);
       } else if (
+        value.kind === 'LoadGlobal' &&
+        value.binding.kind === 'ImportSpecifier'
+      ) {
+        const moduleTargets = depArrayTargets.get(value.binding.module);
+        if (moduleTargets != null) {
+          const numRequiredArgs = moduleTargets.get(value.binding.imported);
+          if (numRequiredArgs != null) {
+            targetLoads.set(lvalue.identifier.id, numRequiredArgs);
+          }
+        }
+      } else if (
         /*
          * This check is not final. Right now we only look for useEffects without a dependency array.
          * This is likely not how we will ship this feature, but it is good enough for us to make progress
          * on the implementation and test it.
          */
         value.kind === 'CallExpression' &&
-        isUseEffectHookType(value.callee.identifier) &&
-        value.args.length === 1 &&
+        targetLoads.get(value.callee.identifier.id) === value.args.length &&
         value.args[0].kind === 'Identifier'
       ) {
         const fnExpr = fnExpressions.get(value.args[0].identifier.id);
@@ -51,7 +69,7 @@ export function inferEffectDependencies(
 
           const depsPlace = createTemporaryPlace(env, GeneratedSource);
           depsPlace.effect = Effect.Read;
-          value.args[1] = depsPlace;
+          value.args.push(depsPlace);
 
           const newInstruction: Instruction = {
             id: makeInstructionId(0),
