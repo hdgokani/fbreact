@@ -33,15 +33,13 @@ function Component({foo, bar}) {
 
   // No inferred dep array, the argument is not a lambda
   useEffect(f);
-<<<<<<< HEAD
-=======
 
   // No inserted deps for non-configured calls
   useNotEffect(() => {
     console.log(foo);
   });
 
-  // Inserted deps because of configuration
+  // Inserted deps because of config
   useSpecialEffect(() => {
     console.log(foo);
   }, [foo]);
@@ -54,5 +52,4 @@ function Component({foo, bar}) {
     [foo],
     [foo]
   );
->>>>>>> 1cd3d66b58 ([compiler] Make required args number configurable)
 }

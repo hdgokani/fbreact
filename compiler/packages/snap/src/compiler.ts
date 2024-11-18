@@ -174,7 +174,7 @@ function makePluginOptions(
       .filter(s => s.length > 0);
   }
 
-  let inferEffectDependencies = false;
+  let inferEffectDependencies = null;
   if (firstLine.includes('@inferEffectDependencies')) {
     inferEffectDependencies = [
       {
